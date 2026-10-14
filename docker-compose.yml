@@ -1,0 +1,44 @@
+version: '3.8'
+
+networks:
+  # internal isolated network: no external access allowed for the backend
+  medvitals-internal-net:
+    driver: bridge
+    internal: true
+  # public-facing network for gateway traffic
+  medvitals-public-net:
+    driver: brdige
+
+services:
+  # Java 21 High-Throughput Engine for Analytics
+  analytics-engine: 
+    build:
+      context: ./src/MedVitals.Analytics
+      dockerfile: Dockerfile
+    container_name: medvitals-analytics
+    restart: always
+    networks: 
+      - medvitals-internal-net
+    # Port 8080 is NOT exposed to host machine/public internet
+    # accessible strictly inside 'medvital-internal-net'
+    environment:
+      - JAVA_OPTS=-Xms256m - Xmx512m
+  
+  # ASP.NET Core API Gateway
+  gateway-portal:
+    build:
+      context: ./src/MedVitals.Gateway
+      dockerfile: dockerfile
+    container_name: medvitals-gateway
+    restart: always
+    ports:
+      - "5000:80" # insecure
+      - "5001:443" # secure
+    networks:
+      - medvitals-public-net
+      - medvitals-internal-net
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - AnalyticsEngine__BaseUrl=http://analytics-engine:8080
+    depends_on:
+      - analytics-engine
