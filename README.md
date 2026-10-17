@@ -73,7 +73,7 @@ cd medvitals-ai
 # Build and start containerized microservices
 docker-compose up
 
-# Examples
+# Local Setup & Launch
 curl -X POST http://localhost:<GATEWAY_PORT>/<VITALS_ENDPOINT> \
   -H "Content-Type: application/json" \
   -d '{
@@ -85,6 +85,7 @@ curl -X POST http://localhost:<GATEWAY_PORT>/<VITALS_ENDPOINT> \
         "avpu": "ALERT"
       }'
 
+# Sample Response
 {
   "patientId": "demo-001",
   "mews": {
