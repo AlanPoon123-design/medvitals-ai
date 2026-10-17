@@ -60,7 +60,7 @@ Incoming vitals receive sub-scores ranging from `0` to `3` based on deviations f
 
 ### Prerequisites
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running container daemon)
-* Git
+* [Git](https://git-scm.com/)
 
 ### Local Setup & Launch
 ```bash
