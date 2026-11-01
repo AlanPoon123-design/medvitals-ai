@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedVitals AI — Clinical Observability Portal</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>MedVitals AI — Health Determination System</h1>
+        <span class="status-badge" id="source-tag">ACTIVE: HARDWARE TELEMETRY STREAM</span>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Patient Dataset File Scanner Input -->
+        <div class="card">
+            <h2>Dataset Telemetry Scanner</h2>
+            
+            <div class="form-group">
+                <label for="csv-file">Scan Patient Dataset File (CSV)</label>
+                <input type="file" id="csv-file" accept=".csv">
+            </div>
+
+            <button id="btn-scan">Scan & Execute Risk Analysis</button>
+            
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #64748b; line-height: 1.4;">
+                <p><strong>Scanner Mode:</strong> Parses raw patient time-series records and transmits sequence batches to the Java ONNX runtime for MEWS & AI risk evaluation.</p>
+            </div>
+        </div>
+
+        <!-- Real-Time Clinical Analytics Panel -->
+        <div class="card">
+            <h2>Clinical Risk Assessment Output</h2>
+
+            <div class="metrics-row">
+                <div class="metric-box">
+                    <label>Rule-Based MEWS Score</label>
+                    <div class="val" id="mews-val">0</div>
+                </div>
+                <div class="metric-box">
+                    <label>LSTM AI Risk Probability</label>
+                    <div class="val" id="ai-val">0%</div>
+                </div>
+            </div>
+
+            <div id="escalation-badge" class="alert-badge badge-low">
+                LOW RISK: Standard Ward Monitoring
+            </div>
+
+            <h2>Deterioration Risk Trend</h2>
+            <div class="chart-container">
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

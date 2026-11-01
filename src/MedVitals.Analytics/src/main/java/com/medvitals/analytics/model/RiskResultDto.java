@@ -4,6 +4,8 @@ public record RiskResultDto(
     String patientId,
     String bedNumber,
     int mewsScore,
-    String triagLevel,
-    String recommendation
+    String triageLevel,
+    String recommendation,
+    float aiRiskScore,
+    String modelVersion
 ) {}

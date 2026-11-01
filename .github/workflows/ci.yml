@@ -1,0 +1,99 @@
+name: MedVitalsAI
+
+on:
+  push: 
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  # build & train PyTorch mode -> export ONNX artifact
+  ml-pipeline:
+    name: Train & Export ONNX Model
+    runs-on: ubuntu-latest
+  
+  steps:
+    - name: Check Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    
+    - name: Install ML Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ml-pipeline/requirements.txt
+    
+    - name: Execute Model Training & ONNX Export
+      run: |
+        cd ml-pipeline
+        python train_model.python
+    
+    - name: Upload ONNX Model Artifact
+      uses: actions/upload-artifact@4
+      with:
+        name: deterioration-onnx-model
+        path: ml-pipeline/deterioration_model.onnx
+  
+  # build & test Java analytics engine
+  build-analytics:
+    name: Build Java Analytics Engine
+    needs: ml-pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Download ONNX Model Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deteriroation-onnx-model
+          path: src/MedVitals.Analytics/src/main/resources/
+      
+      - name: Build with maven
+        run: |
+          cd src/MedVitals.Analytics
+          mvn -B clean package -DskipTests
+      
+  # build & test C# / Spring Gateway
+  build-gateway:
+    name: Build API Gateway
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: action/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Build Gateway
+        run: |
+          cd src/MedVitals.Gateway
+          mvn -B clean package -DskipTests
+  
+  verify-firmware:
+    name: Verify ESP32 Firmware Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check ESP32 Firmware Files
+        run: |
+          test -f firmware/esp32_vitals.ino && echo "ESP32 firmware present." || exit 1

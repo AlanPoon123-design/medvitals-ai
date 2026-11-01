@@ -1,0 +1,50 @@
+import torch
+import torch.nn as nn
+import torch.onnx
+import os
+
+# define the LSTM neural network architecture for clinical deterioration scoring
+class DeteriorationLSTM(nn.Module):
+    def __init__(self, input_size=5, hidden_size=32, num_layers=1):
+        super(DeteriorationLSTM, self).__init__()
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, 1)
+        self.sigmoid = nn.Sigmoid() # outputs a normalized risk score between 0.0 and 1.0
+
+    def forward(self, x):
+        # x shape: [batch_size, sequence_length, features]
+        out, _ = self.lstm(x)
+        # Take the output of the last time step in the sequence
+        out = self.fc(out[:, -1, :])
+        return self.sigmoid(out)
+
+# initialize the model
+model = DeteriorationLSTM()
+model.eval()
+
+# create dummy input matching your runtime shape: [batch_size=1, sequence_length=10, features=5]
+# features typically map to: [Heart Rate, Respiratory Rate, Systolic BP, Temp, O2 Saturation]
+dummy_input = torch.randn(1, 10, 5)
+
+# target output file path (save directly into your Java resources folder or move it there after)
+output_dir = "src/main/resources"
+os.makedirs(output_dir, exist_ok=True)
+onnx_path = os.path.join(output_dir, "deterioration_model.onnx")
+
+# export the model to ONNX format
+torch.onnx.export(
+    model, 
+    dummy_input, 
+    onnx_path, 
+    export_params=True,
+    opset_version=11,
+    do_constant_folding=True,
+    input_names=["input"], 
+    output_names=["output"],
+    dynamic_axes={
+        "input": {0: "batch_size", 1: "sequence_length"}, 
+        "output": {0: "batch_size"}
+    }
+)
+
+print(f"Success! Model exported and saved to: {os.path.abspath(onnx_path)}")

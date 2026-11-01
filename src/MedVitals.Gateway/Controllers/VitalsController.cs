@@ -1,36 +1,52 @@
 using Microsoft.AspNetCore.Mvc;
 using MedVitals.Gateway.Models;
 using MedVitals.Gateway.Services;
-using System.Runtime.Versioning;
-using System.Net;
+using System.Threading.Tasks.Dataflow;
 
-[ApiController]
-[ResourceConsumption("api/gateway/vitals")]
-public class VitalsController : ControlBase
+namespace MedVitals.Gateway.Controllers
 {
-    private readonly AnalyticsService _analyticsService;
-
-    public VitalsController(AnalyticsService analyticsService)
+    [ApiController]
+    [Route("api/vitals")]
+    public class VitalsController : ControllerBase
     {
-        _analyticsService = analyticsService;
-    }
+        private readonly AnalyticsService _analyticsService;
 
-    [HttpPost("batch-assess")]
-    public async Task<ActionResult<List<RiskAssessmentResult>>> AsessVitalBatch([FromBody] List <PatientVitals> batch)
-    {
-        if(batch == null || batch.Count == 0)
+        public VitalsController(AnalyticsService analyticsService)
         {
-            return BadRequest("Vitals batch cannot be empty.");
+            _analyticsService = analyticsService;
         }
 
-        try
+        // POST api/vitals
+        // used by ESP32 C++ hardware telemetry and frontend single posts
+        [HttpPost]
+        public async Task<ActionResult<RiskAssessmentResult>> AssessVitals([FromBody] PatientVitals vitals)
         {
-            var results = await _analyticsService.AssessBatchAsync(batch);
+            if(vitals == null)
+            {
+                return BadRequest("Invalid vital sign payload.");
+            }
+
+            var result = await _analyticsService.ForwardToAnalyticsAsync(vitals);
+            return Ok(result);
+        }
+
+        // POST api/vitals/batch-assess
+        // used by Dataset File Scanner to process CSV batch records
+        [HttpPost("batch-assess")]
+        public async Task<ActionResult<List<RiskAssessmentResult>>> AssessVitalBatch([FromBody] List<PatientVitals> batch)
+        {
+            if(batch == null || !batch.Any()){
+                return BadRequest("Batch payload is empty.");
+            }
+
+            var results = new List<RiskAssessmentResult>();
+            foreach(var vitals in batch)
+            {
+                var res = await _analyticsService.ForwardToAnalyticsAsync(vitals);
+                results.Add(res);
+            }
+
             return Ok(results);
-        }
-        catch (HttpRequestException ex)
-        {
-            return FtpStatusCode(503, new { error = "Analytics engine is currently unavailable.", details = ex.Massage });
         }
     }
 }

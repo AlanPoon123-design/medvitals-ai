@@ -1,0 +1,35 @@
+{
+    "csharp.suppressDiagnosticsWarning": false,
+    "dotnet.server.useOmniSharp": false,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.enableEditorConfigSupport": true,
+
+    "[csharp]": {
+        "editor.defaultFormatter": "ms-dotnettools.csharp",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+
+    "java.compile.nullAnalysis.mode": "automatic",
+
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.autoImportCompletions": true,
+
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/target": true,
+        "**/.vs": true
+    },
+    
+    "search.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/target": true
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "dotnet.formatting.organizeImportsOnFormat": true
+}
