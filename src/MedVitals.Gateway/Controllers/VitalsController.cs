@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using MedVitals.Gateway.Models;
 using MedVitals.Gateway.Services;
-using System.Threading.Tasks.Dataflow;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MedVitals.Gateway.Controllers
 {
@@ -21,7 +20,7 @@ namespace MedVitals.Gateway.Controllers
         [HttpPost]
         public async Task<ActionResult<RiskAssessmentResult>> AssessVitals([FromBody] PatientVitals vitals)
         {
-            if(vitals == null)
+            if (vitals == null)
             {
                 return BadRequest("Invalid vital sign payload.");
             }
@@ -35,12 +34,13 @@ namespace MedVitals.Gateway.Controllers
         [HttpPost("batch-assess")]
         public async Task<ActionResult<List<RiskAssessmentResult>>> AssessVitalBatch([FromBody] List<PatientVitals> batch)
         {
-            if(batch == null || !batch.Any()){
+            if (batch == null || !batch.Any())
+            {
                 return BadRequest("Batch payload is empty.");
             }
 
             var results = new List<RiskAssessmentResult>();
-            foreach(var vitals in batch)
+            foreach (var vitals in batch)
             {
                 var res = await _analyticsService.ForwardToAnalyticsAsync(vitals);
                 results.Add(res);

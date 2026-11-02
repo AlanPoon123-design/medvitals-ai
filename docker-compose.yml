@@ -7,7 +7,7 @@ networks:
     internal: true
   # public-facing network for gateway traffic
   medvitals-public-net:
-    driver: brdige
+    driver: bridge
 
 services:
   # Java 21 High-Throughput Engine for Analytics
@@ -22,13 +22,13 @@ services:
     # Port 8080 is NOT exposed to host machine/public internet
     # accessible strictly inside 'medvital-internal-net'
     environment:
-      - JAVA_OPTS=-Xms256m - Xmx512m
+      - JAVA_OPTS=-Xmx256m - Xmx512m
   
   # ASP.NET Core API Gateway
   gateway-portal:
     build:
       context: ./src/MedVitals.Gateway
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     container_name: medvitals-gateway
     restart: always
     ports:

@@ -36,10 +36,10 @@ def export_to_onnx():
         export_params=True,
         opset_version=14,
         do_constant_folding=True,
-        inpput_names=['vitals_sequence'],
+        input_names=['vitals_sequence'],
         output_names=['deterioration_risk'],
         dynamic_axes={
-            'vitals_sequence': {0, 'batch_size', 1, 'sequence_length'},
+            'vitals_sequence': {0: 'batch_size', 1: 'sequence_length'},
             'deterioration_risk': {0: 'batch_size'}
         }
     )

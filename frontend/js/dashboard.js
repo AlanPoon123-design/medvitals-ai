@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const GATEWAY_URL = "https://localhost:5000/api/vitals";
+    const GATEWAY_URL = "http://localhost:5000/api/vitals";
     let hardwarePollingInterval = null;
 
     // initialize Chart.js
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.onload = (event) => {
             const lines = event.target.result.split('\n').slice(1);
             const dataset = lines.map(line => {
-                const parts = line.split('');
+                const parts = line.split(',');
                 if(parts.length < 5) return null;
                 return {
                     patientId: "PATIENT-FILE-SCAN",
@@ -57,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     spo2: parseInt(parts[4])
                 };
             }).filter(item => item !== null);
+            processScannedBatch(dataset);
         };
         reader.readAsText(file);
     });
@@ -72,8 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function startHardwareTelemetryStream(){
         document.getElementById('source-tag').innerText = "ACTIVE: HARDWARE TELEMETRY STREAM";
         hardwarePollingInterval = setInterval(async () => {
-            const res = await fetch(`${GATEWAY_URL}/PATIENT-001`)
             try{
+                const res = await fetch(`${GATEWAY_URL}/PATIENT-001`);
                 const data = await res.json();
                 updateDashboardUI(data);
             } catch(err){
@@ -82,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2000);
     }
 
-    // helper funcction for sending telemetry to backend engine
+    // helper function for sending telemetry to backend engine
     async function sendTelemetryPayload(payload){
         try{
             const res = await fetch(GATEWAY_URL, {
@@ -101,8 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // update UI elements
-    function updatedashboardUI(data){
-        document.getElementById('mews-val').innerText = data.mewsResul?.score ?? data.mewsScore ?? 0;
+    function updateDashboardUI(data){
+        document.getElementById('mews-val').innerText = data.mewsResult?.score ?? data.mewsScore ?? 0;
 
         const rawAiScore = data.aiRiskResult?.score ?? data.aiRiskScore ?? 0;
         const aiPct = Math.round(rawAiScore * 100);
@@ -120,13 +121,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // plot trend
-        const timpestamp = new Date().toLocaleTimeString();
+        const timestamp = new Date().toLocaleTimeString();
         if(riskChart.data.labels.length >= 10){
             riskChart.data.labels.shift();
             riskChart.data.datasets[0].data.shift();
         }
         riskChart.data.labels.push(timestamp);
-        riskChart.data.datsets[0].data.push(aiPct);
+        riskChart.data.datasets[0].data.push(aiPct);
         riskChart.update();
     }
 

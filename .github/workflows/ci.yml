@@ -7,35 +7,35 @@ on:
     branches: ["main", "master"]
 
 jobs:
-  # build & train PyTorch mode -> export ONNX artifact
+  # build & train PyTorch model -> export ONNX artifact
   ml-pipeline:
     name: Train & Export ONNX Model
     runs-on: ubuntu-latest
   
-  steps:
-    - name: Check Repository
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    
-    - name: Install ML Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r ml-pipeline/requirements.txt
-    
-    - name: Execute Model Training & ONNX Export
-      run: |
-        cd ml-pipeline
-        python train_model.python
-    
-    - name: Upload ONNX Model Artifact
-      uses: actions/upload-artifact@4
-      with:
-        name: deterioration-onnx-model
-        path: ml-pipeline/deterioration_model.onnx
+    steps:
+      - name: Check Repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install ML Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ml-pipeline/requirements.txt
+      
+      - name: Execute Model Training & ONNX Export
+        run: |
+          cd ml-pipeline
+          python train_model.py
+      
+      - name: Upload ONNX Model Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deterioration-onnx-model
+          path: ml-pipeline/deterioration_model.onnx
   
   # build & test Java analytics engine
   build-analytics:
@@ -47,37 +47,37 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
       
       - name: Download ONNX Model Artifact
         uses: actions/download-artifact@v4
         with:
-          name: deteriroation-onnx-model
+          name: deterioration-onnx-model
           path: src/MedVitals.Analytics/src/main/resources/
       
       - name: Build with maven
         run: |
           cd src/MedVitals.Analytics
           mvn -B clean package -DskipTests
-      
-  # build & test C# / Spring Gateway
+  
+  # build & test Java / Spring Gateway
   build-gateway:
     name: Build API Gateway
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: action/checkout@v4
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
       
@@ -96,4 +96,4 @@ jobs:
 
       - name: Check ESP32 Firmware Files
         run: |
-          test -f firmware/esp32_vitals.ino && echo "ESP32 firmware present." || exit 1
+          test -f firmware/esp32_vitals/esp32_vitals.ino && echo "ESP32 firmware present." || exit 1
