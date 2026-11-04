@@ -3,6 +3,8 @@
 > **Real-Time Clinical Observability & Silent Patient Deterioration Prevention Engine**  
 > *Developed for the 2026 UCR BCOE Bear Tank Competition.*
 
+<img width="1112" height="960" alt="Image_5bwou35bwou35bwo" src="https://github.com/user-attachments/assets/48140905-012e-48be-bc87-8d1c86d6114e" />
+
 [![ASP.NET Core 8.0](https://img.shields.io/badge/API%20Gateway-ASP.NET%20Core%208.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Java 21](https://img.shields.io/badge/Analytics%20Engine-Java%2021%20Spring%20Boot-007396?logo=openjdk)](https://spring.io/)
 [![ONNX Runtime](https://img.shields.io/badge/Inference-ONNX%20Runtime-00599C?logo=onnx)](https://onnxruntime.ai/)
