@@ -9,3 +9,12 @@ target/
 *.class
 .idea/
 *.iml
+
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# secrets
+.env

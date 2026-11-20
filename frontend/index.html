@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedVitals AI — Clinical Observability Portal</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"
+            integrity="sha384-Emf5ZVIUiarAdhkgtqK+5/Z5qIvM6QoVrS+qAVtfyZVuD5lIHrac0me485+Antp0"
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
 </head>
 <body>
 
     <header>
-        <h1>MedVitals AI — Health Determination System</h1>
-        <span class="status-badge" id="source-tag">ACTIVE: HARDWARE TELEMETRY STREAM</span>
+        <h1>MedVitals AI — Health Deterioration System</h1>
+        <span class="status-badge" id="source-tag" aria-live="polite">CONNECTING TO GATEWAY…</span>
     </header>
 
     <div class="dashboard-grid">
@@ -24,10 +27,11 @@
                 <input type="file" id="csv-file" accept=".csv">
             </div>
 
-            <button id="btn-scan">Scan & Execute Risk Analysis</button>
+            <button id="btn-scan">Scan &amp; Execute Risk Analysis</button>
+            <div id="status-message" class="status-message" role="alert" hidden></div>
             
             <div style="margin-top: 20px; font-size: 0.8rem; color: #64748b; line-height: 1.4;">
-                <p><strong>Scanner Mode:</strong> Parses raw patient time-series records and transmits sequence batches to the Java ONNX runtime for MEWS & AI risk evaluation.</p>
+                <p><strong>Scanner Mode:</strong> Parses patient records from a CSV file (columns: heart rate, systolic BP, respiratory rate, temperature °C, SpO2) and sends them in a single batch to the analytics engine for rule-based MEWS scoring. Results are replayed on the trend chart.</p>
             </div>
         </div>
 

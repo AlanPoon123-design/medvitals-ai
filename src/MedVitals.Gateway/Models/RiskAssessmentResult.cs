@@ -7,4 +7,6 @@ public class RiskAssessmentResult
     public int MewsScore { get; set; }
     public string TriageLevel { get; set; } = string.Empty;
     public string Recommendation { get; set; } = string.Empty;
+    public float AiRiskScore { get; set; }
+    public string ModelVersion { get; set; } = string.Empty;
 }

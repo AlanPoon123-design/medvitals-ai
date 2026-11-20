@@ -1,4 +1,7 @@
-torch>=2.0.0
+# torch>=2.9: dynamo-based torch.onnx.export with dynamic_shapes / external_data
+torch>=2.9.0
 numpy>=1.24.0
 onnx>=1.14.0
 onnxruntime>=1.15.0
+# required by torch.onnx.export's dynamo exporter
+onnxscript>=0.5.0

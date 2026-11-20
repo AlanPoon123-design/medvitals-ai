@@ -5,21 +5,30 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.FloatBuffer;
 import java.util.Collections;
 
 @Service
 public class OnnxInferenceService {
+    private static final String MODEL_RESOURCE = "deterioration_model.onnx";
+
     private OrtEnvironment env;
     private OrtSession session;
 
     @PostConstruct
-    public void init() throws OrtException{
+    public void init() throws OrtException, IOException {
         // initialize ONNX Runtime environment and session
         this.env = OrtEnvironment.getEnvironment();
-        // load ONNX model file located in resources directory
-        String modelPath = getClass().getClassLoader().getResource("deterioration_model.onnx").getPath();
-        this.session = env.createSession(modelPath, new OrtSession.SessionOptions());
+        // load the model as bytes: a filesystem path from getResource().getPath() does not work
+        // once the resource is packaged inside the Spring Boot fat jar
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(MODEL_RESOURCE)) {
+            if (in == null) {
+                throw new IllegalStateException("ONNX model resource not found on classpath: " + MODEL_RESOURCE);
+            }
+            this.session = env.createSession(in.readAllBytes(), new OrtSession.SessionOptions());
+        }
     }
 
     /**
