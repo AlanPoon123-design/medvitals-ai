@@ -7,13 +7,22 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # minimal runtime container
-FROM eclipse-temurin:21-jre-alpine
+# glibc-based (Ubuntu) JRE: ONNX Runtime's native libraries are not built for Alpine/musl
+FROM eclipse-temurin:21-jre
 WORKDIR /app
+
+# curl is used by the docker-compose healthcheck
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/target/*.jar app.jar
 
 # run as non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN groupadd --system appgroup && useradd --system --gid appgroup --no-create-home appuser
 USER appuser
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# shell form via sh -c so $JAVA_OPTS is expanded; exec keeps java as PID 1 for proper signal handling
+ENV JAVA_OPTS=""
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

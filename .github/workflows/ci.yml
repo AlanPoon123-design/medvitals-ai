@@ -7,9 +7,12 @@ on:
     branches: ["main", "master"]
 
 jobs:
-  # build & train PyTorch model -> export ONNX artifact
+  # verify the committed ONNX model and that the PyTorch -> ONNX export still works.
+  # train_model.py currently produces randomly initialised weights, so its output is a
+  # throwaway smoke-test file and is NOT shipped: the analytics engine builds with the
+  # committed src/MedVitals.Analytics/src/main/resources/deterioration_model.onnx.
   ml-pipeline:
-    name: Train & Export ONNX Model
+    name: Verify ONNX Model & Export
     runs-on: ubuntu-latest
   
     steps:
@@ -20,27 +23,26 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: ml-pipeline/requirements.txt
       
       - name: Install ML Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r ml-pipeline/requirements.txt
       
-      - name: Execute Model Training & ONNX Export
+      - name: Smoke-test ONNX Export (output discarded)
+        run: python ml-pipeline/train_model.py "$RUNNER_TEMP/export_smoke_test.onnx"
+
+      - name: Verify Committed & Exported Models
         run: |
-          cd ml-pipeline
-          python train_model.py
-      
-      - name: Upload ONNX Model Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: deterioration-onnx-model
-          path: ml-pipeline/deterioration_model.onnx
+          python ml-pipeline/verify_model.py \
+            src/MedVitals.Analytics/src/main/resources/deterioration_model.onnx \
+            "$RUNNER_TEMP/export_smoke_test.onnx"
   
-  # build & test Java analytics engine
+  # build & test Java analytics engine (uses the committed ONNX model)
   build-analytics:
     name: Build Java Analytics Engine
-    needs: ml-pipeline
     runs-on: ubuntu-latest
 
     steps:
@@ -54,46 +56,66 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Download ONNX Model Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: deterioration-onnx-model
-          path: src/MedVitals.Analytics/src/main/resources/
-      
-      - name: Build with maven
+      - name: Build & Test with Maven
         run: |
           cd src/MedVitals.Analytics
-          mvn -B clean package -DskipTests
+          mvn -B clean verify
   
-  # build & test Java / Spring Gateway
+  # build & test ASP.NET Core Gateway
   build-gateway:
-    name: Build API Gateway
+    name: Build & Test API Gateway
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
+          dotnet-version: '8.0.x'
       
       - name: Build Gateway
-        run: |
-          cd src/MedVitals.Gateway
-          mvn -B clean package -DskipTests
+        run: dotnet build src/MedVitals.Gateway/MedVitals.Gateway.csproj -c Release
+
+      - name: Test Gateway
+        run: dotnet test tests/MedVitals.Gateway.Tests/MedVitals.Gateway.Tests.csproj -c Release --logger "console;verbosity=normal"
   
-  verify-firmware:
-    name: Verify ESP32 Firmware Files
+  # compile ESP32 firmware to catch syntax / API / library errors
+  build-firmware:
+    name: Compile ESP32 Firmware
     runs-on: ubuntu-latest
+    env:
+      ESP32_INDEX_URL: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      FQBN: esp32:esp32:esp32
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Check ESP32 Firmware Files
+      - name: Set up Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Cache Arduino cores & libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.arduino15
+            ~/Arduino/libraries
+          key: arduino-esp32-${{ runner.os }}-v1
+
+      - name: Install ESP32 Core
         run: |
-          test -f firmware/esp32_vitals/esp32_vitals.ino && echo "ESP32 firmware present." || exit 1
+          arduino-cli core update-index --additional-urls "$ESP32_INDEX_URL"
+          arduino-cli core install esp32:esp32 --additional-urls "$ESP32_INDEX_URL"
+
+      - name: Install Libraries
+        run: arduino-cli lib install "SparkFun MAX3010x Pulse and Proximity Sensor Library"
+
+      - name: Compile Firmware
+        run: |
+          arduino-cli compile \
+            --fqbn "$FQBN" \
+            --additional-urls "$ESP32_INDEX_URL" \
+            --warnings default \
+            firmware/esp32_vitals

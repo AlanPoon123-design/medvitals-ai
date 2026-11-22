@@ -14,6 +14,7 @@ COPY --from=build /app/publish .
 # run as non-root user
 USER $APP_UID
 
-EXPOSE 80
-EXPOSE 443
+# .NET 8 aspnet images listen on 8080 by default (ASPNETCORE_HTTP_PORTS=8080);
+# TLS is expected to be terminated by a reverse proxy in front of the gateway
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "MedVitals.Gateway.dll"]
